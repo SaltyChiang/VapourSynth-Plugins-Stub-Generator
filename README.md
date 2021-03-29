@@ -25,4 +25,4 @@ print(sys.path)'
 
 Now open your [VSCode](https://code.visualstudio.com/) and enable [Python extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python), set `python.languageServer` to `Pylance` and then you should see the autocompletion for vapoursynth functions works.
 
-This works by using python stub file, so your language server should have ability to use `.pyi` files. [Pylance](https://marketplace.visualstudio.com/items?itemName=ms-python.vscode-pylance) in VSCode works perfectly for me, and Jedi works but not so good.
+This works by using python stub file, so your language server should have ability to use `.pyi` files. [Pylance](https://marketplace.visualstudio.com/items?itemName=ms-python.vscode-pylance) in VSCode works perfectly for me, and I'm wondering how to make Jedi work with it.
