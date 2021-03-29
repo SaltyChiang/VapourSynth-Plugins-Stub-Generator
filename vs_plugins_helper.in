@@ -46,7 +46,7 @@ class SampleType(Enum):
     COMPATBGR32: int
     COMPATYUY2: int
 
-class CoreBase:
+class _Core:
     from . import Format
 
     num_threads: int
@@ -97,8 +97,8 @@ class VideoFrame:
     def get_write_array(self, plane: int) -> memoryview: ...
     def get_stride(self, plane: int) -> int: ...
 
-class VideoNodeBase:
-    from . import VideoNodeBase
+class _VideoNode:
+    from . import _VideoNode
 
     format: Format
     width: int
@@ -110,7 +110,7 @@ class VideoNodeBase:
     flags: int
     def get_frame(self, n: int) -> VideoFrame: ...
     def get_frame_async(self, n: int) -> VideoFrame: ...
-    def set_output(self, index: int = 0, alpha: VideoNodeBase = None) -> None: ...
+    def set_output(self, index: int = 0, alpha: _VideoNode = None) -> None: ...
     def output(
         self,
         fileobj,

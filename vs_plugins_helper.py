@@ -81,13 +81,13 @@ init_lines = init_in_file.readlines()
 init_lines.append("\n")
 init_in_file.close()
 
-init_lines.append("class Core(CoreBase):\n")
+init_lines.append("class Core(_Core):\n")
 for plugin_identifier in plugins:
     plugin_dict = plugins[plugin_identifier]
     plugin_namespace = plugin_dict["namespace"]
     init_lines.append("    from . import %s\n" % (plugin_namespace))
 
-init_lines.append("class VideoNode(VideoNodeBase):\n")
+init_lines.append("class VideoNode(_VideoNode):\n")
 for plugin_identifier in plugins:
     plugin_dict = plugins[plugin_identifier]
     plugin_namespace = plugin_dict["namespace"]
