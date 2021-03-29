@@ -78,15 +78,16 @@ for plugin_identifier in plugins:
 init_in_file = open("%s" % (init_in_path), "r")
 init_file = open("%s/__init__.pyi" % (vs_path), "w+")
 init_lines = init_in_file.readlines()
-init_lines.append("\n")
 init_in_file.close()
 
+init_lines.append("\n")
 init_lines.append("class Core(_Core):\n")
 for plugin_identifier in plugins:
     plugin_dict = plugins[plugin_identifier]
     plugin_namespace = plugin_dict["namespace"]
     init_lines.append("    from . import %s\n" % (plugin_namespace))
 
+init_lines.append("\n")
 init_lines.append("class VideoNode(_VideoNode):\n")
 for plugin_identifier in plugins:
     plugin_dict = plugins[plugin_identifier]
