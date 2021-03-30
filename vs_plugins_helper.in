@@ -1,6 +1,9 @@
-import ctypes
-from typing import Any, Iterator
+from concurrent.futures import Future
+from ctypes import c_void_p
 from enum import Enum
+from fractions import Fraction
+from inspect import Signature
+from typing import Any, BinaryIO, Callable, Dict, Iterator, Union, overload
 
 class ColorFamily(Enum):
     RGB = 2000000
@@ -10,6 +13,10 @@ class ColorFamily(Enum):
     COMPAT = 9000000
 
 class SampleType(Enum):
+    INTEGER = 0
+    FLOAT = 1
+
+class PresetFormat(Enum):
     GRAY8: int
     GRAY16: int
     GRAYH: int
@@ -46,31 +53,52 @@ class SampleType(Enum):
     COMPATBGR32: int
     COMPATYUY2: int
 
-class _Core:
-    from . import Format
+RGB = ColorFamily.RGB
+YUV = ColorFamily.YUV
+GRAY = ColorFamily.GRAY
+YCOCG = ColorFamily.YCOCG
+COMPAT = ColorFamily.COMPAT
 
-    num_threads: int
-    add_cache: bool
-    max_cache_size: int
-    def set_max_cache_size(self, mb: int) -> None: ...
-    def get_plugins(self) -> dict: ...
-    def list_functions(self) -> str: ...
-    def register_format(
-        self,
-        color_family,
-        sample_type,
-        bits_per_sample: int,
-        subsampling_w: int,
-        subsampling_h: int,
-    ) -> Format: ...
-    def get_format(self, id: int) -> Format: ...
-    def version(self) -> str: ...
-    def version_number(self) -> int: ...
+INTEGER = SampleType.INTEGER
+FLOAT = SampleType.FLOAT
+
+GRAY8 = PresetFormat.GRAY8
+GRAY16 = PresetFormat.GRAY16
+GRAYH = PresetFormat.GRAYH
+GRAYS = PresetFormat.GRAYS
+YUV420P8 = PresetFormat.YUV420P8
+YUV422P8 = PresetFormat.YUV422P8
+YUV444P8 = PresetFormat.YUV444P8
+YUV410P8 = PresetFormat.YUV410P8
+YUV411P8 = PresetFormat.YUV411P8
+YUV440P8 = PresetFormat.YUV440P8
+YUV420P9 = PresetFormat.YUV420P9
+YUV422P9 = PresetFormat.YUV422P9
+YUV444P9 = PresetFormat.YUV444P9
+YUV420P10 = PresetFormat.YUV420P10
+YUV422P10 = PresetFormat.YUV422P10
+YUV444P10 = PresetFormat.YUV444P10
+YUV420P12 = PresetFormat.YUV420P12
+YUV422P12 = PresetFormat.YUV422P12
+YUV444P12 = PresetFormat.YUV444P12
+YUV420P14 = PresetFormat.YUV420P14
+YUV422P14 = PresetFormat.YUV422P14
+YUV444P14 = PresetFormat.YUV444P14
+YUV420P16 = PresetFormat.YUV420P16
+YUV422P16 = PresetFormat.YUV422P16
+YUV444P16 = PresetFormat.YUV444P16
+YUV444PH = PresetFormat.YUV444PH
+YUV444PS = PresetFormat.YUV444PS
+RGB24 = PresetFormat.RGB24
+RGB27 = PresetFormat.RGB27
+RGB30 = PresetFormat.RGB30
+RGB48 = PresetFormat.RGB48
+RGBH = PresetFormat.RGBH
+RGBS = PresetFormat.RGBS
+COMPATBGR32 = PresetFormat.COMPATBGR32
+COMPATYUY2 = PresetFormat.COMPATYUY2
 
 class Format:
-    from . import Core
-    from . import Format
-
     id: int
     name: str
     color_family: ColorFamily
@@ -80,96 +108,88 @@ class Format:
     subsampling_w: int
     subsampling_h: int
     num_planes: int
-    def replace(self, core: Core = None, **kwargs) -> Format: ...
+    def replace(self, core: Core = None, **kwargs: Any) -> Format: ...
 
 class VideoFrame:
-    from . import VideoFrame
-
     format: Format
     width: int
     height: int
     readonly: bool
     props: dict
     def copy(self) -> VideoFrame: ...
-    def get_read_ptr(self, plane: int) -> ctypes.c_void_p: ...
+    def get_read_ptr(self, plane: int) -> c_void_p: ...
     def get_read_array(self, plane: int) -> memoryview: ...
-    def get_write_ptr(self, plane: int) -> ctypes.c_void_p: ...
+    def get_write_ptr(self, plane: int) -> c_void_p: ...
     def get_write_array(self, plane: int) -> memoryview: ...
     def get_stride(self, plane: int) -> int: ...
 
 class _VideoNode:
-    from . import _VideoNode
-
     format: Format
     width: int
     height: int
     num_frames: int
-    fps: float
+    fps: Fraction
     fps_num: int
     fps_den: int
     flags: int
     def get_frame(self, n: int) -> VideoFrame: ...
-    def get_frame_async(self, n: int) -> VideoFrame: ...
-    def set_output(self, index: int = 0, alpha: _VideoNode = None) -> None: ...
+    def get_frame_async(self, n: int) -> Future: ...
+    @overload
+    def get_frame_async_raw(self, n: int, cb: Callable[[VideoNode, int, Union[VideoFrame, Exception]], None]) -> None: ...
+    @overload
+    def get_frame_async_raw(self, n: int, cb: Future, wrapper: Callable[[Union[VideoFrame, Exception]], None] = None) -> None: ...
+    def set_output(self, index: int = 0, alpha: VideoNode = None) -> None: ...
     def output(
         self,
-        fileobj,
+        fileobj: BinaryIO,
         y4m: bool = False,
         prefetch: int = 0,
-        progress_update: callable = None,
+        progress_update: Callable[[int, int], bool] = None,
     ) -> None: ...
     def frames(self) -> Iterator: ...
 
-RGB = ColorFamily.RGB
-YUV = ColorFamily.YUV
-GRAY = ColorFamily.GRAY
-YCOCG = ColorFamily.YCOCG
-COMPAT = ColorFamily.COMPAT
+class AlphaOutputTuple:
+    clip: VideoNode
+    alpha: VideoNode
 
-GRAY8 = SampleType.GRAY8
-GRAY16 = SampleType.GRAY16
-GRAYH = SampleType.GRAYH
-GRAYS = SampleType.GRAYS
-YUV420P8 = SampleType.YUV420P8
-YUV422P8 = SampleType.YUV422P8
-YUV444P8 = SampleType.YUV444P8
-YUV410P8 = SampleType.YUV410P8
-YUV411P8 = SampleType.YUV411P8
-YUV440P8 = SampleType.YUV440P8
-YUV420P9 = SampleType.YUV420P9
-YUV422P9 = SampleType.YUV422P9
-YUV444P9 = SampleType.YUV444P9
-YUV420P10 = SampleType.YUV420P10
-YUV422P10 = SampleType.YUV422P10
-YUV444P10 = SampleType.YUV444P10
-YUV420P12 = SampleType.YUV420P12
-YUV422P12 = SampleType.YUV422P12
-YUV444P12 = SampleType.YUV444P12
-YUV420P14 = SampleType.YUV420P14
-YUV422P14 = SampleType.YUV422P14
-YUV444P14 = SampleType.YUV444P14
-YUV420P16 = SampleType.YUV420P16
-YUV422P16 = SampleType.YUV422P16
-YUV444P16 = SampleType.YUV444P16
-YUV444PH = SampleType.YUV444PH
-YUV444PS = SampleType.YUV444PS
-RGB24 = SampleType.RGB24
-RGB27 = SampleType.RGB27
-RGB30 = SampleType.RGB30
-RGB48 = SampleType.RGB48
-RGBH = SampleType.RGBH
-RGBS = SampleType.RGBS
-COMPATBGR32 = SampleType.COMPATBGR32
-COMPATYUY2 = SampleType.COMPATYUY2
+class Function:
+    name: str
+    plugin: Plugin
+    signature: str
+    def __call__(self, *args: Any, **kwargs: Any) -> VideoNode: ...
 
-from . import Core
+class Plugin:
+    name: str
+    def get_functions(self) -> Dict[str, str]: ...
+    def list_functions(self) -> str: ...
+    def __getattr__(self, name: str) -> Function: ...
+
+class _Core:
+    num_threads: int
+    add_cache: bool
+    max_cache_size: int
+    def set_max_cache_size(self, mb: int) -> None: ...
+    def get_plugins(self) -> Dict[str, Dict[str, Union[str, Dict[str, str]]]]: ...
+    def list_functions(self) -> str: ...
+    def register_format(
+        self,
+        color_family: ColorFamily,
+        sample_type: SampleType,
+        bits_per_sample: int,
+        subsampling_w: int,
+        subsampling_h: int,
+    ) -> Format: ...
+    def get_format(self, id: int) -> Format: ...
+    def version(self) -> str: ...
+    def version_number(self) -> int: ...
+    def __getattr__(self, name: str) -> Plugin: ...
 
 core: Core
 
 def get_core(threads: int = 0, add_cache: bool = True) -> Core: ...
-def set_message_handler(handler_func: callable) -> Any: ...
-def get_outputs() -> Any: ...
-def get_output(index: int = 0) -> Any: ...
-def clear_output(index: int = 0) -> Any: ...
-def clear_outputs() -> Any: ...
-def construct_signature(signature: object, injected: object = None) -> Any: ...
+def set_message_handler(handler_func: Callable[[int, str], None]) -> None: ...
+def get_outputs() -> Dict[int, Union[VideoNode, AlphaOutputTuple]]: ...  # TODO: Check
+def get_output(index: int = 0) -> Union[VideoNode, AlphaOutputTuple]: ...  # TODO: Check
+def clear_output(index: int = 0) -> None: ...
+def clear_outputs() -> None: ...
+def construct_signature(signature: str, injected: Any = None) -> Signature: ...
