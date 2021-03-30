@@ -33,7 +33,7 @@ def convert2pyi(params: str):
     list_type_regex = re.compile(r"^(?P<type>\S+)\[\]$")
     param_list = params.split(";")
     vn = False
-    if param_list[0].split(":")[1] == "clip":
+    if param_list[0].split(":")[1] == "clip" or "clip[]":
         vn = True
     for param_i in range(len(param_list)):
         param_name_type = param_list[param_i].split(":")
