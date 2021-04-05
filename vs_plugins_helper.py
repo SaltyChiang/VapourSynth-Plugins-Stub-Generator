@@ -78,6 +78,7 @@ def plugins2str(plugins: List[PluginMeta], video: bool, indent: int = 4) -> str:
     if not video:
         for plugin in plugins:
             lines.append(f"class {plugin.namespace}(Plugin):")
+            lines.append(f'    """{plugin.name}"""')
             for func in plugin.functions_core.keys():
                 lines.append(f"    def {func}({plugin.functions_core[func]})->VideoNode:...")
         lines = [" " * indent + line for line in lines]
@@ -85,6 +86,7 @@ def plugins2str(plugins: List[PluginMeta], video: bool, indent: int = 4) -> str:
         for plugin in plugins:
             if len(plugin.functions_video) != 0:
                 lines.append(f"class {plugin.namespace}(Plugin):")
+                lines.append(f'    """{plugin.name}"""')
                 for func in plugin.functions_video.keys():
                     lines.append(f'    def {func}({plugin.functions_video[func]})->"VideoNode":...')
         lines = [" " * indent + line for line in lines]
