@@ -73,20 +73,22 @@ def functions2pyi(functions: FunctionMeta) -> List[FunctionMeta]:
     return functions_core, functions_video
 
 
-def plugins2str(plugins: List[PluginMeta], video: bool) -> str:
-    ret = []
+def plugins2str(plugins: List[PluginMeta], video: bool, indent: int = 4) -> str:
+    lines = []
     if not video:
         for plugin in plugins:
-            ret.append(f"    class {plugin.namespace}(Plugin):")
+            lines.append(f"class {plugin.namespace}(Plugin):")
             for func in plugin.functions_core.keys():
-                ret.append(f"        def {func}({plugin.functions_core[func]})->VideoNode:...")
+                lines.append(f"    def {func}({plugin.functions_core[func]})->VideoNode:...")
+        lines = [" " * indent + line for line in lines]
     else:
         for plugin in plugins:
             if len(plugin.functions_video) != 0:
-                ret.append(f"    class {plugin.namespace}(Plugin):")
+                lines.append(f"class {plugin.namespace}(Plugin):")
                 for func in plugin.functions_video.keys():
-                    ret.append(f'        def {func}({plugin.functions_video[func]})->"VideoNode":...')
-    return "\n".join(ret)
+                    lines.append(f'    def {func}({plugin.functions_video[func]})->"VideoNode":...')
+        lines = [" " * indent + line for line in lines]
+    return "\n".join(lines)
 
 
 plugins = core.get_plugins()
@@ -101,8 +103,8 @@ pyi_in_file = open(f"{init_in_path}", "r")
 pyi_content = pyi_in_file.read()
 pyi_in_file.close()
 
-pyi_content = pyi_content.replace(r"# inject Core plugins", plugins2str(plugins_meta, False))
-pyi_content = pyi_content.replace(r"# inject VideoNode plugins", plugins2str(plugins_meta, True))
+pyi_content = pyi_content.replace(r"# inject Core plugins", plugins2str(plugins_meta, False, 4))
+pyi_content = pyi_content.replace(r"# inject VideoNode plugins", plugins2str(plugins_meta, True, 4))
 
 pyi_file = open(f"{vs_path}", "w+")
 pyi_file.write(pyi_content)
