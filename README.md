@@ -12,9 +12,9 @@ Then run the command:
 python vs_plugins_helper.py
 ```
 
-A folder called `vapoursynth` should be created, and move it to where your python could find it (i.e. your python search path), for example:
+A file called `vapoursynth.pyi` should be created, and move it to where your python could find it (i.e. your python search path), for example:
 ```bash
-mv vapoursynth /path/to/python/Lib/site-packages/
+mv vapoursynth.pyi /path/to/python/Lib/site-packages/
 ```
 
 You can check python search path by:
