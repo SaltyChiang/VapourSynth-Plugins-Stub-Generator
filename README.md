@@ -28,5 +28,7 @@ Now open your [VSCode](https://code.visualstudio.com/) and enable [Python extens
 This works by using python stub file, so your language server should have ability to use `.pyi` files. [Pylance](https://marketplace.visualstudio.com/items?itemName=ms-python.vscode-pylance) in VSCode works perfectly for me, and I'm wondering how to make Jedi work with it.
 
 If you want the code highlighting and hotkeys such as "f5"\"f6" in vsedit, you can copy 3 .json files in .vscode and do following options:
+
 1.paste the settings.json to the user settings folder or work area settings folder. This will enable the python code highlighting.
+
 2.paste the tasks.json to the user settings folder or work area settings folder, and paste the keybindings.json to your vscode user settings folder.(Usually at username\AppData\Roaming\Code\User This makes "ctrl+f5" and "ctrl+f6" work but will cover the global hotkey settings.)
