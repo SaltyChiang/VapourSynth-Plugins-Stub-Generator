@@ -1,0 +1,12 @@
+[
+    {
+        "key": "ctrl+f5 ",
+        "command": "workbench.action.tasks.runTask",
+        "args": "vspreview"
+    },  //This array makes "ctrl+f5" work.
+    {
+        "key": "ctrl+f6",
+        "command": "workbench.action.tasks.runTask",
+        "args": "check"
+    }   //This array makes "ctrl+f6" work.
+]
