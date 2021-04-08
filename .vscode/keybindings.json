@@ -6,7 +6,6 @@
     },  //This array makes "ctrl+f5" work.
     {
         "key": "ctrl+f6",
-        "command": "workbench.action.tasks.runTask",
-        "args": "check"
+        "command": "python.execInTerminal"
     }   //This array makes "ctrl+f6" work.
 ]
