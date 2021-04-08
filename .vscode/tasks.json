@@ -12,14 +12,6 @@
                 "vspreview",
                 "${file}",
             ]
-        },
-        {
-            "label": "check",
-            "type": "shell",
-            "command": "path\\to\\your\\VapourSynth\\python.exe",   //Change to path to the python.exe which your python is using.
-            "args": [
-                "${file}"
-            ]
         }
     ]
 }
