@@ -3,6 +3,5 @@
         "*.vpy": "python"
     },
     "python.pythonPath": "path\\to\\your\\VapourSynth\\python.exe", //Change to path to the python.exe which your python is using.
-    "python.languageServer": "Pylance",
-    "editor.fontSize": 19,
+    "python.languageServer": "Pylance"
 }
