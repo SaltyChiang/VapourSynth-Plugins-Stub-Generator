@@ -1,25 +1,4 @@
-import os
-import sys
-import re
 from typing import Dict, List, Union
-from vapoursynth import core
-
-vs_path = "."
-init_in_path = "vs_plugins_helper.in"
-
-if len(sys.argv) > 1 and sys.argv[1] is not None:
-    vs_path = sys.argv[1]
-    if not os.path.exists(vs_path):
-        print(f'Path "{vs_path}" invalid.')
-        sys.exit()
-
-vs_path = f"{vs_path}/vapoursynth.pyi"
-if os.path.exists(vs_path):
-    print('There exists "vapoursynth.pyi" in the path, do you want to cover it? (y/N)')
-    cover = input().lower()
-    if cover != "y" and cover != "yes":
-        print("Stop generating.")
-        sys.exit()
 
 
 class FunctionMeta(Dict[str, Union[str, None]]):
@@ -97,20 +76,54 @@ def plugins2str(plugins: List[PluginMeta], video: bool, indent: int = 4) -> str:
     return "\n".join(lines)
 
 
-plugins = core.get_plugins()
-plugins_meta = []
+def generate_pyi(out_file: str, in_file: str):
+    from vapoursynth import core
 
-for plugin in plugins.values():
-    plugin_meta = PluginMeta(plugin["namespace"], plugin["name"], functions2pyi(plugin["functions"]))
-    plugin_meta.functions_video = {key: val for key, val in plugin_meta.functions_video.items() if val is not None}
-    plugins_meta.append(plugin_meta)
+    plugins = core.get_plugins()
+    plugins_meta = []
 
-pyi_in_file = open(f"{init_in_path}", "r")
-pyi_content = pyi_in_file.read()
-pyi_in_file.close()
+    for plugin in plugins.values():
+        plugin_meta = PluginMeta(plugin["namespace"], plugin["name"], functions2pyi(plugin["functions"]))
+        plugin_meta.functions_video = {key: val for key, val in plugin_meta.functions_video.items() if val is not None}
+        plugins_meta.append(plugin_meta)
 
-pyi_content = pyi_content.replace(r"# inject Core plugins", plugins2str(plugins_meta, False, 4))
-pyi_content = pyi_content.replace(r"# inject VideoNode plugins", plugins2str(plugins_meta, True, 4))
+    with open(f"{in_file}", "r") as f:
+        pyi_content = f.read()
 
-pyi_file = open(f"{vs_path}", "w+")
-pyi_file.write(pyi_content)
+    pyi_content = pyi_content.replace(r"# inject Core plugins", plugins2str(plugins_meta, False, 4))
+    pyi_content = pyi_content.replace(r"# inject VideoNode plugins", plugins2str(plugins_meta, True, 4))
+
+    with open(f"{out_file}", "w+") as f:
+        f.write(pyi_content)
+
+
+def main():
+    import os
+    import sys
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-o", "--output-path", type=str, default=".", help=r"Set output folder path.")
+    args = parser.parse_args()
+
+    in_path = "vs_plugins_helper.in"
+    out_path = args.output_path
+
+    if not os.path.exists(out_path):
+        print(f'Path "{out_path}" invalid.')
+        sys.exit()
+
+    out_path = f"{out_path}/vapoursynth.pyi"
+
+    if os.path.exists(out_path):
+        print('There exists "vapoursynth.pyi" in the path, do you want to cover it? (y/N)')
+        cover = input().lower()
+        if cover != "y" and cover != "yes":
+            print("Stop generating.")
+            sys.exit()
+
+    generate_pyi(out_path, in_path)
+
+
+if __name__ == "__main__":
+    main()
