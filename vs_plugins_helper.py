@@ -40,25 +40,29 @@ class PluginMeta:
 
 
 def params2pyi(params: str) -> List[str]:
+    """ Type information from https://github.com/vapoursynth/vapoursynth/blob/master/src/cython/vapoursynth.pyx#L385 """
     params = params.strip(";")
     if params == "":
         return params, None
-    list_type_regex = re.compile(r"^(?P<type>\S+)\[\]$")
     param_list = params.split(";")
-    vn = False
-    if param_list[0].split(":")[1] in ["clip", "clip[]"]:
-        vn = True
+
+    video = param_list[0].split(":")[1] in ["clip", "clip[]"]
+
     for param_i in range(len(param_list)):
-        param_name_type = param_list[param_i].split(":")
-        list_type_match = list_type_regex.match(param_name_type[1])
-        if list_type_match is not None:
-            list_type = list_type_match.groupdict()["type"]
-            param_name_type[1] = f"Union[{list_type},Sequence[{list_type}]]"
-        if len(param_name_type) >= 3 and param_name_type[2] == "opt":
-            param_name_type[1] = f"Optional[{param_name_type[1]}]"
-        param_name_type[1] = param_name_type[1].replace("data", "Union[str, bytes, bytearray]").replace("clip", "VideoNode")
-        param_list[param_i] = ":".join(param_name_type[0:2])
-    if vn:
+        name_type_opt = param_list[param_i].split(":")
+        pname = name_type_opt[0]
+        ptype = name_type_opt[1]
+        parray = ptype.endswith("[]")
+        popt = (len(name_type_opt) >= 3) and (name_type_opt[2] == "opt")
+
+        ptype = ptype[:-2] if parray else ptype
+        ptype = ptype.replace("clip", "VideoNode").replace("frame", "VideoFrame")
+        ptype = ptype.replace("func", "Callable").replace("data", "Union[str, bytes, bytearray]")
+        ptype = f"Union[{ptype},Sequence[{ptype}]]" if parray else ptype
+        ptype = f"Optional[{ptype}]" if popt else ptype
+        param_list[param_i] = ":".join([pname, ptype])
+
+    if video:
         return ",".join(param_list), ",".join(param_list[1::]).replace("VideoNode", '"VideoNode"')
     else:
         return ",".join(param_list), None
