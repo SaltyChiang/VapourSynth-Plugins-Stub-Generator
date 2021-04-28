@@ -1,2 +1,4 @@
 vapoursynth
 *.pyi
+
+__pycache__
