@@ -1,7 +1,7 @@
-# VapourSynth-Plugins-Stub-Generator
+# vapoursynth-stub
 An unofficial stub generator for vapoursynth and its plugins, which is helpful to autocomplete code in VSCode.
 
-## Generating stub file
+## Install and generate stub file
 
 At first, you need to have a [python](https://www.python.org/) with [vapoursynth](https://www.vapoursynth.com/) installed. You can check it with
 ```bash
@@ -13,6 +13,11 @@ Then run the command:
 ```bash
 python -m pip install .
 python -m vapoursynth_stub install
+```
+
+Or use `update-vsstub` in `Scripts` folder to update stub:
+```bash
+/path/to/python/Scripts/update-vsstub
 ```
 
 A file called `vapoursynth.pyi` should be created in one of you PYTHONPATH.
