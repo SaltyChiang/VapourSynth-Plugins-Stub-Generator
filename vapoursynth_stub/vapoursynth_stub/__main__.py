@@ -1,6 +1,4 @@
-if __name__ == "__main__":
-    import sys
-    from . import install
+from .main import main
 
-    if sys.argv[1] == "install":
-        install.install()
+if __name__ == "__main__":
+    main()

@@ -9,25 +9,31 @@ python -c 'from vapoursynth import core
 print(core.version())'
 ```
 
-Then run the command:
+It is easy to install or uninstall the package with pip:
 ```bash
 python -m pip install .
+python -m pip uninstall vapoursynth-stub
+```
+
+You can use the command below to generate the stub file:
+```bash
 python -m vapoursynth_stub install
 ```
 
-Or use `update-vsstub` in `Scripts` folder to update stub:
+or use `vsstub` in `Scripts` folder to do the same thing:
 ```bash
-/path/to/python/Scripts/update-vsstub
+/path/to/python/Scripts/vsstub install
 ```
 
 A file called `vapoursynth.pyi` should be created in one of you PYTHONPATH.
 
-You can check python search path by:
+## Generate stub file for VSCode
+There are several installation modes, you can use `vscode` mode to generate stub file for VSCode with Jedi and JediLSP.
 ```bash
-python -c 'import sys
-print(sys.path)'
+vsstub install vscode
 ```
 
-## Known limit
-
-This works by using python stub file, so your language server should have ability to use `.pyi` files. Pylance in VSCode works perfectly for me, and I'm wondering how to make Jedi work with it.
+The `default` or `vapoursynth` mode shoule work with Pylance or Microsoft Python Language Server.
+```bash
+vsstub install vapoursynth
+```

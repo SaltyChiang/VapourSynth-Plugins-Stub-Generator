@@ -14,15 +14,20 @@ Then run the command:
 python vs_plugins_helper.py
 ```
 
-A file called `vapoursynth.pyi` should be created, and move it to where your python could find it (i.e. your python search path), for example:
+A file called `vapoursynth.pyi` should be created. Move it to where your language server or library like Jedi can recognize.
+
+## Generating stub file for VSCode
+
+For VSCode users, there are some simpler way to generate the stub file.
+
+For Pylance or Microsoft Python Language Server users, run the command to install the stub file:
 ```bash
-mv vapoursynth.pyi /path/to/python/Lib/site-packages/
+python vs_plugins_helper.py install vapoursynth
 ```
 
-You can check python search path by:
+For Jedi or JediLSP users, run the command to install the stub file:
 ```bash
-python -c 'import sys
-print(sys.path)'
+python vs_plugins_helper.py install vscode
 ```
 
 ## Setting up VSCode
@@ -41,6 +46,3 @@ Files in `.vscode` folder might be helpful to set up VSCode.
 
 <sup>2</sup>: Usually refer to `/path/to/your/workdir/.vscode/`
 
-## Known limit
-
-This works by using python stub file, so your language server should have ability to use `.pyi` files. Pylance in VSCode works perfectly for me, and I'm wondering how to make Jedi work with it.

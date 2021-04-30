@@ -19,7 +19,6 @@ setup(
     author="SaltyChiang",
     author_email="SaltyChiang@users.noreply.github.com",
     packages=find_packages(),
-    install_requires=["wheel"],
     classifiers=[
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
@@ -27,5 +26,5 @@ setup(
         "Operating System :: OS Independent",
     ],
     include_package_data=True,
-    entry_points={"console_scripts": ["update-vsstub = vapoursynth_stub.install:install"]},
+    entry_points={"console_scripts": ["vsstub = vapoursynth_stub.main:main"]},
 )
