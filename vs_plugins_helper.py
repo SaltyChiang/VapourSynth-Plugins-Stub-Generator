@@ -4,7 +4,6 @@ from vsstubs.main import main as vsstubs_main
 
 
 def main():
-
     argc = len(sys.argv)
     if argc == 1:
         vsstubs_install("./")

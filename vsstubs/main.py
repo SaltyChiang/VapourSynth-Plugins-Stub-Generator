@@ -2,7 +2,7 @@ def main():
     import os
     import sys
     import vapoursynth
-    from . import install
+    from .install import install
 
     argc = len(sys.argv)
     if argc >= 2:
@@ -17,10 +17,18 @@ def main():
         mode = "none"
 
     if mode == "default":
-        install.install()
+        install()
+    elif mode == "package":
+        pkgdir = os.path.dirname(os.path.realpath(__file__))
+        pkgdir = os.path.abspath(os.path.join(pkgdir, os.pardir))
+        print(pkgdir)
+        stubsdir = os.path.join(pkgdir, "vapoursynth-stubs")
+        if not os.path.exists(stubsdir):
+            os.makedirs(stubsdir)
+        install(stubsdir, "__init__.pyi")
     elif mode == "vapoursynth":
         vsdir = os.path.dirname(os.path.realpath(vapoursynth.__file__))
-        install.install(vsdir)
+        install(vsdir)
     elif mode == "vscode":
         if sys.platform == "win32":
             extdir = os.path.join(os.getenv("USERPROFILE"), ".vscode", "extensions")
@@ -35,8 +43,8 @@ def main():
             return
         jedidir = os.path.join(extdir, pyextlist[-1], "pythonFiles", "lib", "python", "jedi", "third_party", "typeshed", "third_party", "3")
         jedilspdir = os.path.join(extdir, pyextlist[-1], "pythonFiles", "lib", "jedilsp", "jedi", "third_party", "typeshed", "third_party", "3")
-        install.install(jedidir)
-        install.install(jedilspdir)
+        install(jedidir)
+        install(jedilspdir)
     elif mode == "none":
         pass
     else:
