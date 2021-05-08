@@ -38,7 +38,8 @@ def function_params_vs2py(params: str) -> List[str]:
         ptype = ptype.replace("clip", "VideoNode").replace("frame", "VideoFrame")
         ptype = ptype.replace("func", "Callable").replace("data", "Union[str, bytes, bytearray]")
         ptype = f"Union[{ptype},Sequence[{ptype}]]" if parray else ptype
-        ptype = f"Optional[{ptype}]=..." if popt else ptype
+        # ptype = f"Optional[{ptype}]=..." if popt else ptype
+        ptype = f"{ptype}=..." if popt else ptype
         param_list[param_i] = ":".join([pname, ptype])
 
     if video:
