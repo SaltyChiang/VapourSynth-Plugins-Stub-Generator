@@ -2,7 +2,7 @@ import sys
 
 
 def main():
-    sys.path.insert(1, "./")
+    sys.path.insert(1, "./vsstubs/")
     from vsstubs.install import install as vsstubs_install
     from vsstubs.main import main as vsstubs_main
 
