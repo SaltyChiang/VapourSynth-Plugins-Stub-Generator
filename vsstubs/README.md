@@ -1,7 +1,7 @@
 # vsstubs
 An unofficial stub generator for vapoursynth and its plugins, which is helpful to autocomplete code in VSCode.
 
-## Install and generate stub file
+## Generate and install the stub file
 
 At first, you need to have a [python](https://www.python.org/) with [vapoursynth](https://www.vapoursynth.com/) installed. You can check it with
 ```bash
@@ -27,13 +27,8 @@ or use `vsstubs` in `Scripts` folder to do the same thing:
 
 A file called `vapoursynth.pyi` should be created in one of you PYTHONPATH.
 
-## Generate stub file for VSCode
-There are several installation modes, you can use `vscode` mode to generate stub file for VSCode with Jedi and JediLSP.
-```bash
-vsstubs install vscode
-```
+## Install the `vapoursynth-stubs` package
 
-The `default` or `vapoursynth` mode shoule work with Pylance or Microsoft Python Language Server.
 ```bash
-vsstubs install beside
+vsstubs install package
 ```
