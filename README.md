@@ -22,7 +22,7 @@ For VSCode users, there are some simpler way to generate the stub file.
 
 For Pylance or Microsoft Python Language Server users, run the command to install the stub file:
 ```bash
-python vs_plugins_helper.py install vapoursynth
+python vs_plugins_helper.py install beside
 ```
 
 For Jedi or JediLSP users, run the command to install the stub file:

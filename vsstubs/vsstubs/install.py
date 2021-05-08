@@ -5,10 +5,10 @@ def install(dir: str = None, filename: str = "vapoursynth.pyi"):
     pyi_content = generate.stub()
 
     if dir is not None:
-        if not os.path.exists(dir):
-            print(f'Unavailable path "{dir}".')
+        outdir = os.path.realpath(dir)
+        if not os.path.exists(outdir):
+            print(f'Unavailable path "{outdir}".')
             return
-        outdir = dir
     else:
         outdir = os.path.dirname(os.path.realpath(__file__))
         outdir = os.path.abspath(os.path.join(outdir, os.pardir))

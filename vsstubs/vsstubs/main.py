@@ -21,12 +21,11 @@ def main():
     elif mode == "package":
         pkgdir = os.path.dirname(os.path.realpath(__file__))
         pkgdir = os.path.abspath(os.path.join(pkgdir, os.pardir))
-        print(pkgdir)
         stubsdir = os.path.join(pkgdir, "vapoursynth-stubs")
         if not os.path.exists(stubsdir):
             os.makedirs(stubsdir)
         install(stubsdir, "__init__.pyi")
-    elif mode == "vapoursynth":
+    elif mode == "beside":
         vsdir = os.path.dirname(os.path.realpath(vapoursynth.__file__))
         install(vsdir)
     elif mode == "vscode":

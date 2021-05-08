@@ -35,5 +35,5 @@ vsstubs install vscode
 
 The `default` or `vapoursynth` mode shoule work with Pylance or Microsoft Python Language Server.
 ```bash
-vsstubs install vapoursynth
+vsstubs install beside
 ```
