@@ -1,17 +1,15 @@
 import sys
-
-sys.path.insert(1, "./vapoursynth_stub")
+from vsstubs.install import install as vsstubs_install
+from vsstubs.main import main as vsstubs_main
 
 
 def main():
-    from vapoursynth_stub import main
-    from vapoursynth_stub import install
 
     argc = len(sys.argv)
     if argc == 1:
-        install.install("./")
+        vsstubs_install("./")
     else:
-        main.main()
+        vsstubs_main()
 
 
 if __name__ == "__main__":
