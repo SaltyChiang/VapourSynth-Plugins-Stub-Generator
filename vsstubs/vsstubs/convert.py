@@ -24,7 +24,7 @@ def function_params_vs2py(params: str) -> List[str]:
     """ Type information from https://github.com/vapoursynth/vapoursynth/blob/master/src/cython/vapoursynth.pyx#L449 """
     params = params.strip(";")
     if params == "":
-        return params, None
+        return params, None, None
     param_list = params.split(";")
 
     video = param_list[0].split(":")[1] in ["vnode", "vnode[]"]
