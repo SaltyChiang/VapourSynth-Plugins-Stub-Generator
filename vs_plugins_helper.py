@@ -1,3 +1,4 @@
+import os
 import sys
 
 
@@ -8,7 +9,7 @@ def main():
 
     argc = len(sys.argv)
     if argc == 1:
-        vsstubs_install("./")
+        vsstubs_install(os.getcwd(), "vapoursynth.pyi")
     else:
         vsstubs_main()
 

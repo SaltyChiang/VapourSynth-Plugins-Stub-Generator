@@ -1,4 +1,4 @@
-def install(dir: str = None, filename: str = "vapoursynth.pyi"):
+def install(dir: str, filename: str):
     import os
     from . import generate
 
@@ -9,9 +9,9 @@ def install(dir: str = None, filename: str = "vapoursynth.pyi"):
         if not os.path.exists(outdir):
             print(f'Unavailable path "{outdir}".')
             return
-    else:
-        outdir = os.path.dirname(os.path.realpath(__file__))
-        outdir = os.path.abspath(os.path.join(outdir, os.pardir))
+        elif not os.access(dir, os.W_OK):
+            print(f'Access to "{outdir}" is denied.')
+            return
 
     outfile = os.path.join(outdir, filename)
     with open(outfile, "w+") as f:
