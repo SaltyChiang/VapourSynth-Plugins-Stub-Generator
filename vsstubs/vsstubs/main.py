@@ -38,7 +38,9 @@ If not specified, "update" will be selected.
         )
 
     argc = len(sys.argv)
-    if argc >= 2:
+    if argc == 1:
+        mode = "update"
+    elif argc >= 2:
         if sys.argv[1] == "install":
             if argc >= 3:
                 mode = sys.argv[2]
