@@ -5,8 +5,7 @@ An unofficial stub generator for vapoursynth and its plugins, which is helpful t
 
 At first, you need to have a [python](https://www.python.org/) with [vapoursynth](https://www.vapoursynth.com/) installed. You can check it with
 ```bash
-python -c 'from vapoursynth import core
-print(core.version())'
+python -c 'from vapoursynth import core; print(core.version())'
 ```
 
 Then run the command:
@@ -14,18 +13,28 @@ Then run the command:
 python vs_plugins_helper.py
 ```
 
-A file called `vapoursynth.pyi` should be created. Move it to where your language server or library like Jedi can recognize.
+A file called `vapoursynth.pyi` should be created at where you run the command. Move it to where your language server or library like Jedi can recognize.
 
 ## Install the `vapoursynth-stubs` package
 
 Generating a stub-only package named `vapoursynth-stubs` usually helps a lot. You can install the `vsstubs` package by `pip` and then install the `*-stubs` package.
 
 ```bash
-python -m pip install ./vsstubs
-python -m vsstubs install package
+python -m pip install .\vsstubs\
+python -m vsstubs install
 ```
 
 All language servers in VSCode should work with such a package to autocomplete your code.
+
+Once you have installed the stub file, you can update it if there are some new filters added to `vapoursynth` after installation.
+```bash
+python -m vsstubs update
+```
+
+For more usage and mode, get the help message by
+```bash
+python -m vsstubs help
+```
 
 ## Setting up VSCode
 
