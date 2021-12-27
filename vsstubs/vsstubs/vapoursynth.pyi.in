@@ -1,159 +1,470 @@
-from concurrent.futures import Future
-from ctypes import c_void_p
-from enum import IntEnum
+import ctypes
+import inspect
+import logging
 from fractions import Fraction
-from inspect import Signature
-from typing import Any, BinaryIO, Callable, Dict, Generator, Iterator, Mapping, NamedTuple, Sequence, Union, Optional, overload
+import types
+from typing import Any, BinaryIO, Callable, Dict, Iterator, List, NamedTuple, Sequence, Set, Tuple, Union, overload
+from _typeshed import ReadableBuffer
+from concurrent.futures import Future
+from enum import IntEnum
 
-class ColorFamily(IntEnum):
-    UNDEFINED: "ColorFamily"  # = 0
-    RGB: "ColorFamily"  # = 2
-    YUV: "ColorFamily"  # = 3
-    GRAY: "ColorFamily"  # = 1
-    # YCOCG: "ColorFamily"  # = 4
-    # COMPAT: "ColorFamily"  # = 9
+class VapourSynthVersion(NamedTuple):
+    release_major: int
+    release_minor: int
 
-class SampleType(IntEnum):
-    INTEGER: "SampleType"  # = 0
-    FLOAT: "SampleType"  # = 1
+__version__: VapourSynthVersion
 
-class PresetFormat(IntEnum):
-    NONE: "PresetFormat"
+class VapourSynthAPIVersion(NamedTuple):
+    api_major: int
+    api_minor: int
 
-    GRAY8: "PresetFormat"
-    GRAY9: "PresetFormat"
-    GRAY10: "PresetFormat"
-    GRAY12: "PresetFormat"
-    GRAY14: "PresetFormat"
-    GRAY16: "PresetFormat"
-    GRAY32: "PresetFormat"
-    GRAYH: "PresetFormat"
-    GRAYS: "PresetFormat"
+__api_version__: VapourSynthAPIVersion
 
-    YUV420P8: "PresetFormat"
-    YUV422P8: "PresetFormat"
-    YUV444P8: "PresetFormat"
-    YUV410P8: "PresetFormat"
-    YUV411P8: "PresetFormat"
-    YUV440P8: "PresetFormat"
+class EnvironmentData:
+    def __init__(self):
+        raise RuntimeError("Cannot directly instantiate this class.")
+    def __dealloc__(self) -> None: ...
 
-    YUV420P9: "PresetFormat"
-    YUV422P9: "PresetFormat"
-    YUV444P9: "PresetFormat"
+class EnvironmentPolicy:
+    def on_policy_registered(self, special_api):
+        pass
+    def on_policy_cleared(self):
+        pass
+    def get_current_environment(self):
+        raise NotImplementedError
+    def set_environment(self, environment: EnvironmentData):
+        raise NotImplementedError
+    def is_alive(self, environment: EnvironmentData) -> bool: ...
 
-    YUV420P10: "PresetFormat"
-    YUV422P10: "PresetFormat"
-    YUV444P10: "PresetFormat"
+class StandaloneEnvironmentPolicy:
+    def __init__(self):
+        raise RuntimeError("Cannot directly instantiate this class.")
+    def on_policy_registered(self, api: EnvironmentPolicyAPI) -> None: ...
+    def on_policy_cleared(self) -> None: ...
+    def get_current_environment(self) -> EnvironmentData: ...
+    def set_environment(self, environment: EnvironmentData) -> None: ...
+    def is_alive(self, environment: EnvironmentData) -> bool: ...
 
-    YUV420P12: "PresetFormat"
-    YUV422P12: "PresetFormat"
-    YUV444P12: "PresetFormat"
+class EnvironmentPolicyAPI:
+    def __init__(self):
+        raise RuntimeError("Cannot directly instantiate this class.")
+    def wrap_environment(self, environment_data: EnvironmentData) -> Environment: ...
+    def create_environment(self, flags: int = 0) -> EnvironmentData: ...
+    def set_logger(self, env: Environment, logger: Callable[[MessageType, str], None]) -> None: ...
+    def destroy_environment(self, env: EnvironmentData) -> None: ...
+    def unregister_policy(self) -> None: ...
+    def __repr__(self) -> str: ...
 
-    YUV420P14: "PresetFormat"
-    YUV422P14: "PresetFormat"
-    YUV444P14: "PresetFormat"
+def register_policy(policy: EnvironmentPolicy): ...
+def has_policy() -> bool: ...
 
-    YUV420P16: "PresetFormat"
-    YUV422P16: "PresetFormat"
-    YUV444P16: "PresetFormat"
+class _FastManager:
+    def __init__(self):
+        raise RuntimeError("Cannot directly instantiate this class.")
+    def __enter__(self) -> None: ...
+    def __exit__(self, *_) -> None: ...
 
-    YUV444PH: "PresetFormat"
-    YUV444PS: "PresetFormat"
+class Environment:
+    env: EnvironmentData
+    alive: bool
+    single: bool
+    active: bool
+    def __init__(self):
+        raise Error("Class cannot be instantiated directly")
+    def is_single(self) -> bool: ...
+    def env_id(self) -> int: ...
+    def copy(self) -> Environment: ...
+    def use(self) -> _FastManager: ...
+    def __enter__(self) -> Environment: ...
+    def __exit__(self, *_) -> None: ...
+    def __eq__(self, other: Environment) -> bool: ...
+    def __repr__(self) -> str: ...
 
-    RGB24: "PresetFormat"
-    RGB27: "PresetFormat"
-    RGB30: "PresetFormat"
-    RGB36: "PresetFormat"
-    RGB42: "PresetFormat"
-    RGB48: "PresetFormat"
-    RGBH: "PresetFormat"
-    RGBS: "PresetFormat"
+def vpy_current_environment() -> Environment: ...
+def get_current_environment() -> Environment: ...
+def construct_signature(
+    signature: str, return_signature: str, injected: Union[VideoNode, AudioNode] = None
+) -> inspect.Signature: ...
+
+class AlphaOutputTuple(NamedTuple):
+    clip: VideoNode
+    alpha: VideoNode
+    alt_output: int
+
+VideoOutputTuple = AlphaOutputTuple
+
+class Error(Exception):
+    def __init__(self, value: str) -> None: ...
+    def __str__(self) -> str: ...
+    def __repr__(self) -> str: ...
+
+def clear_output(index: int = 0) -> None: ...
+def clear_outputs() -> None: ...
+def get_outputs() -> types.MappingProxyType[int, Union[VideoOutputTuple, AudioNode]]: ...
+def get_output(index: int = 0) -> Union[VideoOutputTuple, AudioNode]: ...
+
+class FuncData:
+    def __init__(self):
+        raise Error("Class cannot be instantiated directly")
+    def __call__(self, **kwargs):
+        return self.func(**kwargs)
+
+class Func:
+    def __init__(self):
+        raise Error("Class cannot be instantiated directly")
+    def __dealloc__(self) -> None: ...
+    def __call__(self, **kwargs) -> Any: ...
+
+class CallbackData:
+    def __init__(
+        self,
+        node: RawNode,
+        env: EnvironmentData,
+        callback: Callable[[RawNode, int, Union[RawNode, Error]], None] = None,
+    ): ...
+    def for_future(
+        self,
+        future: Future[RawNode],
+        wrap_call: Callable[[Callable[[Union[RawNode, Error]], None], Union[RawNode, Error]], None] = None,
+    ): ...
+    @staticmethod
+    def handle_future(
+        env: EnvironmentData,
+        future: Future[RawNode],
+        wrapper: Callable[[Callable[[Union[RawNode, Error]], None], Union[RawNode, Error]], None],
+        node: RawNode,
+        n: int,
+        result,
+    ) -> None: ...
+    def receive(self, n: int, result: Union[RawNode, Error]) -> None: ...
+
+class FramePtr:
+    def __init__(self):
+        raise Error("Class cannot be instantiated directly")
+    def __dealloc__(self) -> None: ...
+
+Format = VideoFormat
+
+class VideoFormat:
+    id: int
+    name: str
+    color_family: ColorFamily
+    sample_type: SampleType
+    bits_per_sample: int
+    bytes_per_sample: int
+    subsampling_w: int
+    subsampling_h: int
+    num_planes: int
+    def __init__(self):
+        raise Error("Class cannot be instantiated directly")
+    def replace(self, core: Core = None, **kwargs) -> VideoFormat: ...
+    def __eq__(self, other: VideoFormat) -> bool: ...
+    def __int__(self) -> int: ...
+    def __str__(self) -> str: ...
+
+class FrameProps:
+    def __init__(self):
+        raise Error("Class cannot be instantiated directly")
+    def __dealloc__(self) -> None: ...
+    def __contains__(self, name: str) -> bool: ...
+    def __getitem__(self, name: str) -> Union[int, float, str, bytes, bytearray, RawNode, RawFrame, Func]: ...
+    def __setitem__(
+        self, name: str, value: Union[int, float, str, bytes, bytearray, RawNode, RawFrame, Func]
+    ) -> None: ...
+    def __delitem__(self, name: str) -> None: ...
+    def __setattr__(self, name: str, value: Union[int, float, str, bytes, bytearray, RawNode, RawFrame, Func]): ...
+    def __delattr__(self, name: str) -> None: ...
+    def __getattr__(self, name: str): ...
+    def keys(self) -> Set[str]: ...
+    def values(self) -> Set[Union[int, float, str, bytes, bytearray, RawNode, RawFrame, Func]]: ...
+    def items(self) -> Set[Tuple[str, Union[int, float, str, bytes, bytearray, RawNode, RawFrame, Func]]]: ...
+    def get(
+        self, key: str, default: Any = None
+    ) -> Union[int, float, str, bytes, bytearray, RawNode, RawFrame, Func]: ...
+    def pop(
+        self, key: str, default: Any = []
+    ) -> Union[int, float, str, bytes, bytearray, RawNode, RawFrame, Func]: ...
+    def popitem(self) -> Tuple[str, Union[int, float, str, bytes, bytearray, RawNode, RawFrame, Func]]: ...
+    def setdefault(
+        self, key: str, default=Union[int, float, str, bytes, bytearray, RawNode, RawFrame, Func]
+    ) -> Union[int, float, str, bytes, bytearray, RawNode, RawFrame, Func]: ...
+    def update(self, *args, **kwargs) -> None: ...
+    def clear(self) -> None: ...
+    def copy(self) -> Dict[str, Union[int, float, str, bytes, bytearray, RawNode, RawFrame, Func]]: ...
+    def __iter__(self) -> Iterator[str]: ...
+    def __len__(self) -> int: ...
+    def __dir__(self) -> List[str]: ...
+    def __repr__(self) -> str: ...
+
+class RawFrame:
+    props: FrameProps
+    readonly: bool
+    def __init__(self):
+        raise Error("Class cannot be instantiated directly")
+    def __dealloc__(self) -> None: ...
+    def get_write_ptr(self, plane: int) -> ctypes.c_void_p: ...
+    def get_read_ptr(self, plane: int) -> ctypes.c_void_p: ...
+    def get_stride(self, plane: int) -> int: ...
+
+class memoryview2(object):
+    """This wraps cython's view.memoryview and fixes its PEP-3118 compliance."""
+
+    def __cinit__(self, obj: ReadableBuffer, readonly: bool = False) -> None: ...
+    def __getbuffer__(self, info, flags: int) -> None: ...
+    def __getattr__(self, attr: str): ...
+    def __getitem__(self, index: int): ...
+    def __setitem__(self, index: int, val: Union[int, float]): ...
+    def __len__(self) -> int: ...
+    def __str__(self) -> str: ...
+    def __repr__(self) -> str: ...
+
+class VideoFrame(RawFrame):
+    format: VideoFormat
+    width: int
+    height: int
+    def __init__(self):
+        raise Error("Class cannot be instantiated directly")
+    def copy(self) -> VideoFrame: ...
+    def __getitem__(self, index: int) -> memoryview: ...
+    def __len__(self) -> int: ...
+    def __str__(self) -> str: ...
+    def get_read_array(self, index: int) -> memoryview2: ...
+    def get_write_array(self, index: int) -> memoryview2: ...
+
+class AudioFrame(RawFrame):
+    sample_type: SampleType
+    bits_per_sample: int
+    bytes_per_sample: int
+    channel_layout: int
+    num_channels: int
+    def __init__(self):
+        raise Error("Class cannot be instantiated directly")
+    def copy(self) -> AudioFrame: ...
+    def __getitem__(self, index: int) -> memoryview: ...
+    def __len__(self) -> int: ...
+    def __str__(self) -> str: ...
+
+class RawNode:
+    def __init__(self):
+        raise Error("Class cannot be instantiated directly")
+    @overload
+    def get_frame_async_raw(
+        self,
+        n: int,
+        cb: Callable[[RawNode, int, Union[RawNode, Error]], None],
+    ) -> Future[RawNode]: ...
+    @overload
+    def get_frame_async_raw(
+        self,
+        n: int,
+        cb: Future[RawNode],
+        future_wrapper: Callable[[Callable[[Union[RawNode, Error]], None], Union[RawNode, Error]], None] = None,
+    ) -> Future[RawNode]: ...
+    def get_frame_async(self, n: int) -> Future[RawNode]: ...
+    def frames(self, prefetch: int = None, backlog: int = None) -> Iterator[RawNode]: ...
+    def __dealloc__(self) -> None: ...
+
+class VideoNode(RawNode):
+    format: VideoFormat
+    width: int
+    height: int
+    num_frames: int
+    fps_num: int
+    fps_den: int
+    fps: Fraction
+    def __init__(self):
+        raise Error("Class cannot be instantiated directly")
+    def __getattr__(self, name: str) -> Plugin: ...
+    @overload
+    def get_frame_async_raw(
+        self,
+        n: int,
+        cb: Callable[[VideoNode, int, Union[VideoNode, Error]], None],
+    ) -> Future[VideoNode]: ...
+    @overload
+    def get_frame_async_raw(
+        self,
+        n: int,
+        cb: Future[VideoNode],
+        future_wrapper: Callable[[Callable[[Union[VideoNode, Error]], None], Union[VideoNode, Error]], None] = None,
+    ) -> Future[VideoNode]: ...
+    def get_frame_async(self, n: int) -> Future[VideoNode]: ...
+    def get_frame(self, n: int) -> VideoFrame: ...
+    def set_output(self, index: int = 0, alpha: VideoNode = None, alt_output: int = 0) -> None: ...
+    def output(
+        self,
+        fileobj: BinaryIO,
+        y4m: bool = False,
+        progress_update: Callable[[int, int], None] = None,
+        prefetch: int = 0,
+        backlog: int = -1,
+    ) -> None: ...
+    def __add__(self, right: VideoNode) -> VideoNode: ...
+    def __radd__(self, left: VideoNode) -> VideoNode: ...
+    def __mul__(self, right: int) -> VideoNode: ...
+    def __rmul__(self, left: int) -> VideoNode: ...
+    def __getitem__(self, val: Union[int, slice]) -> VideoNode: ...
+    def __dir__(self) -> List[Plugin]: ...
+    def __len__(self) -> int: ...
+    def __str__(self) -> str: ...
+
+# inject VideoNode plugins
+
+class AudioNode(RawNode):
+    sample_type: SampleType
+    bits_per_sample: int
+    bytes_per_sample: int
+    channel_layout: int
+    num_channels: int
+    sample_rate: int
+    num_samples: int
+    num_frames: int
+    def __init__(self):
+        raise Error("Class cannot be instantiated directly")
+    def __getattr__(self, name: str) -> Plugin: ...
+    @overload
+    def get_frame_async_raw(
+        self,
+        n: int,
+        cb: Callable[[AudioNode, int, Union[AudioNode, Error]], None],
+    ) -> Future[AudioNode]: ...
+    @overload
+    def get_frame_async_raw(
+        self,
+        n: int,
+        cb: Future[AudioNode],
+        future_wrapper: Callable[[Callable[[Union[AudioNode, Error]], None], Union[AudioNode, Error]], None] = None,
+    ) -> Future[AudioNode]: ...
+    def get_frame_async(self, n: int) -> Future[AudioNode]: ...
+    def get_frame(self, n: int) -> AudioFrame: ...
+    def set_output(self, index: int = 0): ...
+    def __add__(self, right: AudioNode) -> AudioNode: ...
+    def __radd__(self, left: AudioNode) -> AudioNode: ...
+    def __mul__(self, right: int) -> AudioNode: ...
+    def __rmul__(self, left: int) -> AudioNode: ...
+    def __getitem__(self, val: Union[int, slice]) -> AudioNode: ...
+    def __dir__(self) -> List[Plugin]: ...
+    def __len__(self) -> int: ...
+    def __str__(self) -> str: ...
+
+# inject AudioNode plugins
+
+class LogHandle:
+    def __init__(self):
+        raise Error("Class cannot be instantiated directly")
+
+class Core:
+    add_cache: bool
+    num_threads: int
+    max_cache_size: int
+    def __cinit__(self) -> None: ...
+    def __init__(self):
+        raise Error("Class cannot be instantiated directly")
+    def __dealloc__(self) -> None: ...
+    def __getattr__(self, name: str) -> Plugin: ...
+    def set_max_cache_size(self, mb: int) -> None: ...
+    def plugins(self) -> Iterator[Plugin]: ...
+    def get_plugins(self) -> Dict[str, Dict[str, Union[str, Dict[str, str]]]]: ...
+    def list_functions(self) -> str: ...
+    def query_video_format(
+        self,
+        color_family: ColorFamily,
+        sample_type: SampleType,
+        bits_per_sample: int,
+        subsampling_w: int = 0,
+        subsampling_h: int = 0,
+    ) -> VideoFormat: ...
+    def register_format(
+        self,
+        color_family: ColorFamily,
+        sample_type: SampleType,
+        bits_per_sample: int,
+        subsampling_w: int,
+        subsampling_h: int,
+    ) -> VideoFormat: ...
+    def get_video_format(self, id: int) -> VideoFormat: ...
+    def get_format(self, id: int) -> VideoFormat: ...
+    def log_message(self, message_type: MessageType, message: str) -> None: ...
+    def add_log_handler(self, handler_func: Callable[[MessageType, str], None]) -> LogHandle: ...
+    def remove_log_handler(self, handle: LogHandle) -> None: ...
+    def version(self) -> str: ...
+    def version_number(self) -> int: ...
+    def __dir__(self) -> List[Plugin]: ...
+    def __str__(self) -> str: ...
+
+# inject Core plugins
+
+def get_core(threads: int = None, add_cache: bool = None) -> Core: ...
+
+class _CoreProxy(Core):
+    core: Core
+    def __init__(self) -> None: ...
+    def __dir__(self) -> List[str]: ...
+    def __getattr__(self, name: str) -> Plugin: ...
+    def __setattr__(self, name: str, value: Union[int, float, str, bytes, bytearray, RawNode, RawFrame, Func]): ...
+
+core = _CoreProxy.__new__(_CoreProxy)
+
+class Plugin:
+    identifier: str
+    namespace: str
+    name: str
+    def __init__(self):
+        raise Error("Class cannot be instantiated directly")
+    def __getattr__(self, name: str) -> Function: ...
+    def functions(self) -> Iterator[Function]: ...
+    def get_functions(self) -> Dict[str, str]: ...
+    def list_functions(self) -> str: ...
+    def __dir__(self) -> List[str]: ...
+
+class Function:
+    plugin: Plugin
+    name: str
+    signature: str
+    return_signature: str
+    __signature__: inspect.Signature
+    def __init__(self):
+        raise Error("Class cannot be instantiated directly")
+    def __call__(self, *args, **kwargs) -> Any: ...
+
+class PythonVSScriptLoggingBridge(logging.Handler):
+    def __init__(self, parent, level=logging.NOTSET) -> None: ...
+    def emit(self, record) -> None: ...
+
+class VSScriptEnvironmentPolicy:
+    def __init__(self) -> None: ...
+    def on_policy_registered(self, policy_api: EnvironmentPolicyAPI) -> None: ...
+    def on_policy_cleared(self) -> None: ...
+    def get_current_environment(self) -> EnvironmentData: ...
+    def set_environment(self, environment: EnvironmentData) -> EnvironmentData: ...
+    def is_alive(self, environment: EnvironmentData) -> bool: ...
 
 class AudioChannels(IntEnum):
-    FRONT_LEFT: "AudioChannels"
-    FRONT_RIGHT: "AudioChannels"
-    FRONT_CENTER: "AudioChannels"
-    LOW_FREQUENCY: "AudioChannels"
-    BACK_LEFT: "AudioChannels"
-    BACK_RIGHT: "AudioChannels"
-    FRONT_LEFT_OF_CENTER: "AudioChannels"
-    FRONT_RIGHT_OF_CENTER: "AudioChannels"
-    BACK_CENTER: "AudioChannels"
-    SIDE_LEFT: "AudioChannels"
-    SIDE_RIGHT: "AudioChannels"
-    TOP_CENTER: "AudioChannels"
-    TOP_FRONT_LEFT: "AudioChannels"
-    TOP_FRONT_CENTER: "AudioChannels"
-    TOP_FRONT_RIGHT: "AudioChannels"
-    TOP_BACK_LEFT: "AudioChannels"
-    TOP_BACK_CENTER: "AudioChannels"
-    TOP_BACK_RIGHT: "AudioChannels"
-    STEREO_LEFT: "AudioChannels"
-    STEREO_RIGHT: "AudioChannels"
-    WIDE_LEFT: "AudioChannels"
-    WIDE_RIGHT: "AudioChannels"
-    SURROUND_DIRECT_LEFT: "AudioChannels"
-    SURROUND_DIRECT_RIGHT: "AudioChannels"
-    LOW_FREQUENCY2: "AudioChannels"
-
-UNDEFINED = ColorFamily.UNDEFINED
-RGB = ColorFamily.RGB
-YUV = ColorFamily.YUV
-GRAY = ColorFamily.GRAY
-
-INTEGER = SampleType.INTEGER
-FLOAT = SampleType.FLOAT
-
-NONE = PresetFormat.NONE
-
-GRAY8 = PresetFormat.GRAY8
-GRAY9 = PresetFormat.GRAY9
-GRAY10 = PresetFormat.GRAY10
-GRAY12 = PresetFormat.GRAY12
-GRAY14 = PresetFormat.GRAY14
-GRAY16 = PresetFormat.GRAY16
-GRAY32 = PresetFormat.GRAY32
-GRAYH = PresetFormat.GRAYH
-GRAYS = PresetFormat.GRAYS
-
-YUV420P8 = PresetFormat.YUV420P8
-YUV422P8 = PresetFormat.YUV422P8
-YUV444P8 = PresetFormat.YUV444P8
-YUV410P8 = PresetFormat.YUV410P8
-YUV411P8 = PresetFormat.YUV411P8
-YUV440P8 = PresetFormat.YUV440P8
-
-YUV420P9 = PresetFormat.YUV420P9
-YUV422P9 = PresetFormat.YUV422P9
-YUV444P9 = PresetFormat.YUV444P9
-
-YUV420P10 = PresetFormat.YUV420P10
-YUV422P10 = PresetFormat.YUV422P10
-YUV444P10 = PresetFormat.YUV444P10
-
-YUV420P12 = PresetFormat.YUV420P12
-YUV422P12 = PresetFormat.YUV422P12
-YUV444P12 = PresetFormat.YUV444P12
-
-YUV420P14 = PresetFormat.YUV420P14
-YUV422P14 = PresetFormat.YUV422P14
-YUV444P14 = PresetFormat.YUV444P14
-
-YUV420P16 = PresetFormat.YUV420P16
-YUV422P16 = PresetFormat.YUV422P16
-YUV444P16 = PresetFormat.YUV444P16
-
-YUV444PH = PresetFormat.YUV444PH
-YUV444PS = PresetFormat.YUV444PS
-
-RGB24 = PresetFormat.RGB24
-RGB27 = PresetFormat.RGB27
-RGB30 = PresetFormat.RGB30
-RGB36 = PresetFormat.RGB36
-RGB42 = PresetFormat.RGB42
-RGB48 = PresetFormat.RGB48
-RGBH = PresetFormat.RGBH
-RGBS = PresetFormat.RGBS
+    FRONT_LEFT = 0
+    FRONT_RIGHT = 1
+    FRONT_CENTER = 2
+    LOW_FREQUENCY = 3
+    BACK_LEFT = 4
+    BACK_RIGHT = 5
+    FRONT_LEFT_OF_CENTER = 6
+    FRONT_RIGHT_OF_CENTER = 7
+    BACK_CENTER = 8
+    SIDE_LEFT = 9
+    SIDE_RIGHT = 10
+    TOP_CENTER = 11
+    TOP_FRONT_LEFT = 12
+    TOP_FRONT_CENTER = 13
+    TOP_FRONT_RIGHT = 14
+    TOP_BACK_LEFT = 15
+    TOP_BACK_CENTER = 16
+    TOP_BACK_RIGHT = 17
+    STEREO_LEFT = 29
+    STEREO_RIGHT = 30
+    WIDE_LEFT = 31
+    WIDE_RIGHT = 32
+    SURROUND_DIRECT_LEFT = 33
+    SURROUND_DIRECT_RIGHT = 34
+    LOW_FREQUENCY2 = 35
 
 FRONT_LEFT = AudioChannels.FRONT_LEFT
 FRONT_RIGHT = AudioChannels.FRONT_RIGHT
@@ -181,161 +492,252 @@ SURROUND_DIRECT_LEFT = AudioChannels.SURROUND_DIRECT_LEFT
 SURROUND_DIRECT_RIGHT = AudioChannels.SURROUND_DIRECT_RIGHT
 LOW_FREQUENCY2 = AudioChannels.LOW_FREQUENCY2
 
-class VideoFormat:
-    id: int
-    name: str
-    color_family: ColorFamily
-    sample_type: SampleType
-    bits_per_sample: int
-    bytes_per_sample: int
-    subsampling_w: int
-    subsampling_h: int
-    num_planes: int
-    def replace(self, core: "Core" = None, **kwargs: Any) -> "VideoFormat": ...
+class ChromaLocation(IntEnum):
+    CHROMA_LEFT = 0
+    CHROMA_CENTER = 1
+    CHROMA_TOP_LEFT = 2
+    CHROMA_TOP = 3
+    CHROMA_BOTTOM_LEFT = 4
+    CHROMA_BOTTOM = 5
 
-class VideoFrame:
-    format: VideoFormat
-    width: int
-    height: int
-    readonly: bool
-    props: Dict[str, Any]
-    def copy(self) -> "VideoFrame": ...
-    def get_read_ptr(self, plane: int) -> c_void_p: ...
-    def get_read_array(self, plane: int) -> memoryview: ...
-    def get_write_ptr(self, plane: int) -> c_void_p: ...
-    def get_write_array(self, plane: int) -> memoryview: ...
-    def get_stride(self, plane: int) -> int: ...
+CHROMA_LEFT = ChromaLocation.CHROMA_LEFT
+CHROMA_CENTER = ChromaLocation.CHROMA_CENTER
+CHROMA_TOP_LEFT = ChromaLocation.CHROMA_TOP_LEFT
+CHROMA_TOP = ChromaLocation.CHROMA_TOP
+CHROMA_BOTTOM_LEFT = ChromaLocation.CHROMA_BOTTOM_LEFT
+CHROMA_BOTTOM = ChromaLocation.CHROMA_BOTTOM
 
-class VideoNode:
-    format: VideoFormat
-    width: int
-    height: int
-    num_frames: int
-    fps: Fraction
-    fps_num: int
-    fps_den: int
-    flags: int
-    def get_frame(self, n: int) -> VideoFrame: ...
-    def get_frame_async(self, n: int) -> Future: ...
-    @overload
-    def get_frame_async_raw(self, n: int, cb: Callable[["VideoNode", int, Union[VideoFrame, Exception]], None]) -> None: ...
-    @overload
-    def get_frame_async_raw(self, n: int, cb: Future, wrapper: Callable[[Union[VideoFrame, Exception]], None] = None) -> None: ...
-    def set_output(self, index: int = 0, alpha: "VideoNode" = None) -> None: ...
-    def output(
-        self,
-        fileobj: BinaryIO,
-        y4m: bool = False,
-        prefetch: int = 0,
-        progress_update: Callable[[int, int], bool] = None,
-    ) -> None: ...
-    def frames(self) -> Iterator[VideoFrame]: ...
-    def __add__(self, clip: "VideoNode") -> "VideoNode": ...
-    def __mul__(self, times: int) -> "VideoNode": ...
-    def __getitem__(self, indices: Union[int, slice]) -> "VideoNode": ...
-    def __len__(self) -> int: ...
-    def __getattr__(self, namespace: str) -> "Plugin": ...
+class ColorFamily(IntEnum):
+    UNDEFINED = 0
+    GRAY = 1
+    RGB = 2
+    YUV = 3
 
-# inject VideoNode plugins
+UNDEFINED = ColorFamily.UNDEFINED
+GRAY = ColorFamily.GRAY
+RGB = ColorFamily.RGB
+YUV = ColorFamily.YUV
 
-class AudioFrame:
-    sample_type: SampleType
-    bits_per_sample: int
-    bytes_per_sample: int
-    channel_layout: AudioChannels
-    num_channels: int
-    readonly: bool
-    props: Dict[str, Any]
-    def copy(self) -> "AudioFrame": ...
-    def get_read_ptr(self, plane: int) -> c_void_p: ...
-    def get_read_array(self, plane: int) -> memoryview: ...
-    def get_write_ptr(self, plane: int) -> c_void_p: ...
-    def get_write_array(self, plane: int) -> memoryview: ...
-    def get_stride(self, plane: int) -> int: ...
+class ColorPrimaries(IntEnum):
+    PRIMARIES_BT709 = 1
+    PRIMARIES_UNSPECIFIED = 2
+    PRIMARIES_BT470_M = 4
+    PRIMARIES_BT470_BG = 5
+    PRIMARIES_ST170_M = 6
+    PRIMARIES_ST240_M = 7
+    PRIMARIES_FILM = 8
+    PRIMARIES_BT2020 = 9
+    PRIMARIES_ST428 = 10
+    PRIMARIES_ST431_2 = 11
+    PRIMARIES_ST432_1 = 12
+    PRIMARIES_EBU3213_E = 22
 
-class AudioNode:
-    sample_type: SampleType
-    bits_per_sample: int
-    bytes_per_sample: int
-    channel_layout: AudioChannels
-    num_channels: int
-    sample_rate: int
-    def get_frame(self, n: int) -> AudioFrame: ...
-    def get_frame_async(self, n: int) -> Future: ...
-    @overload
-    def get_frame_async_raw(self, n: int, cb: Callable[["AudioNode", int, Union[AudioFrame, Exception]], None]) -> None: ...
-    @overload
-    def get_frame_async_raw(self, n: int, cb: Future, wrapper: Callable[[Union[AudioFrame, Exception]], None] = None) -> None: ...
-    def set_output(self, index: int = 0) -> None: ...
-    def frames(self) -> Iterator[VideoFrame]: ...
-    def __add__(self, clip: "VideoNode") -> "VideoNode": ...
-    def __mul__(self, times: int) -> "VideoNode": ...
-    def __getitem__(self, indices: Union[int, slice]) -> "VideoNode": ...
-    def __len__(self) -> int: ...
-    def __getattr__(self, namespace: str) -> "Plugin": ...
+PRIMARIES_BT709 = ColorPrimaries.PRIMARIES_BT709
+PRIMARIES_UNSPECIFIED = ColorPrimaries.PRIMARIES_UNSPECIFIED
+PRIMARIES_BT470_M = ColorPrimaries.PRIMARIES_BT470_M
+PRIMARIES_BT470_BG = ColorPrimaries.PRIMARIES_BT470_BG
+PRIMARIES_ST170_M = ColorPrimaries.PRIMARIES_ST170_M
+PRIMARIES_ST240_M = ColorPrimaries.PRIMARIES_ST240_M
+PRIMARIES_FILM = ColorPrimaries.PRIMARIES_FILM
+PRIMARIES_BT2020 = ColorPrimaries.PRIMARIES_BT2020
+PRIMARIES_ST428 = ColorPrimaries.PRIMARIES_ST428
+PRIMARIES_ST431_2 = ColorPrimaries.PRIMARIES_ST431_2
+PRIMARIES_ST432_1 = ColorPrimaries.PRIMARIES_ST432_1
+PRIMARIES_EBU3213_E = ColorPrimaries.PRIMARIES_EBU3213_E
 
-# inject AudioNode plugins
+class ColorRange(IntEnum):
+    RANGE_FULL = 0
+    RANGE_LIMITED = 1
 
-class AlphaOutputTuple(NamedTuple):
-    clip: VideoNode
-    alpha: VideoNode
+RANGE_FULL = ColorRange.RANGE_FULL
+RANGE_LIMITED = ColorRange.RANGE_LIMITED
 
-class Function:
-    name: str
-    plugin: "Plugin"
-    signature: str
-    return_signature: str
-    def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
+class CoreCreationFlags(IntEnum):
+    ccfEnableGraphInspection = 1
+    ccfDisableAutoLoading = 2
+    ccfDisableLibraryUnloading = 4
 
-class Plugin:
-    name: str
-    namespace: str
-    def functions(self) -> Generator[Function]: ...
-    def get_functions(self) -> Dict[str, str]: ...
-    def list_functions(self) -> str: ...
-    def __getattr__(self, name: str) -> Function: ...
+ccfEnableGraphInspection = CoreCreationFlags.ccfEnableGraphInspection
+ccfDisableAutoLoading = CoreCreationFlags.ccfDisableAutoLoading
+ccfDisableLibraryUnloading = CoreCreationFlags.ccfDisableLibraryUnloading
 
-class Core:
-    num_threads: int
-    max_cache_size: int
-    add_cache: bool
-    def set_max_cache_size(self, mb: int) -> None: ...
-    def plugins(self) -> Generator[Plugin]: ...
-    def get_plugins(self) -> Dict[str, Dict[str, Union[str, Dict[str, str]]]]: ...
-    def list_functions(self) -> str: ...
-    def query_video_format(
-        self,
-        color_family: ColorFamily,
-        sample_type: SampleType,
-        bits_per_sample: int,
-        subsampling_w: int,
-        subsampling_h: int,
-    ) -> VideoFormat: ...
-    def register_format(
-        self,
-        color_family: ColorFamily,
-        sample_type: SampleType,
-        bits_per_sample: int,
-        subsampling_w: int,
-        subsampling_h: int,
-    ) -> VideoFormat: ...
-    def get_video_format(self, id: Union[VideoFormat, int, PresetFormat]) -> VideoFormat: ...
-    def get_format(self, id: Union[VideoFormat, int, PresetFormat]) -> VideoFormat: ...
-    def version(self) -> str: ...
-    def version_number(self) -> int: ...
-    def __getattr__(self, namespace: str) -> Plugin: ...
+class FieldBased(IntEnum):
+    FIELD_PROGRESSIVE = 0
+    FIELD_TOP = 2
+    FIELD_BOTTOM = 1
 
-# inject Core plugins
+FIELD_PROGRESSIVE = FieldBased.FIELD_PROGRESSIVE
+FIELD_TOP = FieldBased.FIELD_TOP
+FIELD_BOTTOM = FieldBased.FIELD_BOTTOM
 
+class MatrixCoefficients(IntEnum):
+    MATRIX_RGB = 0
+    MATRIX_BT709 = 1
+    MATRIX_UNSPECIFIED = 2
+    MATRIX_FCC = 4
+    MATRIX_BT470_BG = 5
+    MATRIX_ST170_M = 6
+    MATRIX_YCGCO = 8
+    MATRIX_BT2020_NCL = 9
+    MATRIX_BT2020_CL = 10
+    MATRIX_CHROMATICITY_DERIVED_NCL = 12
+    MATRIX_CHROMATICITY_DERIVED_CL = 13
+    MATRIX_ICTCP = 14
 
-def set_message_handler(handler_func: Callable[[int, str], None]) -> None: ...
-def get_outputs() -> Mapping[int, Union[VideoNode, AlphaOutputTuple]]: ...
-def get_output(index: int = 0) -> Union[VideoNode, AlphaOutputTuple]: ...
-def clear_output(index: int = 0) -> None: ...
-def clear_outputs() -> None: ...
-def construct_signature(signature: str, injected: Any = None) -> Signature: ...
+MATRIX_RGB = MatrixCoefficients.MATRIX_RGB
+MATRIX_BT709 = MatrixCoefficients.MATRIX_BT709
+MATRIX_UNSPECIFIED = MatrixCoefficients.MATRIX_UNSPECIFIED
+MATRIX_FCC = MatrixCoefficients.MATRIX_FCC
+MATRIX_BT470_BG = MatrixCoefficients.MATRIX_BT470_BG
+MATRIX_ST170_M = MatrixCoefficients.MATRIX_ST170_M
+MATRIX_YCGCO = MatrixCoefficients.MATRIX_YCGCO
+MATRIX_BT2020_NCL = MatrixCoefficients.MATRIX_BT2020_NCL
+MATRIX_BT2020_CL = MatrixCoefficients.MATRIX_BT2020_CL
+MATRIX_CHROMATICITY_DERIVED_NCL = MatrixCoefficients.MATRIX_CHROMATICITY_DERIVED_NCL
+MATRIX_CHROMATICITY_DERIVED_CL = MatrixCoefficients.MATRIX_CHROMATICITY_DERIVED_CL
+MATRIX_ICTCP = MatrixCoefficients.MATRIX_ICTCP
 
-class _CoreProxy(Core):
-    core: Core
+class MediaType(IntEnum):
+    VIDEO = 1
+    AUDIO = 2
 
-core: _CoreProxy
+VIDEO = MediaType.VIDEO
+AUDIO = MediaType.AUDIO
+
+class MessageType(IntEnum):
+    MESSAGE_TYPE_DEBUG = 0
+    MESSAGE_TYPE_INFORMATION = 1
+    MESSAGE_TYPE_WARNING = 2
+    MESSAGE_TYPE_CRITICAL = 3
+    MESSAGE_TYPE_FATAL = 4
+
+MESSAGE_TYPE_DEBUG = MessageType.MESSAGE_TYPE_DEBUG
+MESSAGE_TYPE_INFORMATION = MessageType.MESSAGE_TYPE_INFORMATION
+MESSAGE_TYPE_WARNING = MessageType.MESSAGE_TYPE_WARNING
+MESSAGE_TYPE_CRITICAL = MessageType.MESSAGE_TYPE_CRITICAL
+MESSAGE_TYPE_FATAL = MessageType.MESSAGE_TYPE_FATAL
+
+class PresetFormat(IntEnum):
+    NONE = 0
+    GRAY8 = 268959744
+    GRAY9 = 269025280
+    GRAY10 = 269090816
+    GRAY12 = 269221888
+    GRAY14 = 269352960
+    GRAY16 = 269484032
+    GRAY32 = 270532608
+    GRAYH = 286261248
+    GRAYS = 287309824
+    YUV410P8 = 805831170
+    YUV411P8 = 805831168
+    YUV440P8 = 805830657
+    YUV420P8 = 805830913
+    YUV422P8 = 805830912
+    YUV444P8 = 805830656
+    YUV420P9 = 805896449
+    YUV422P9 = 805896448
+    YUV444P9 = 805896192
+    YUV420P10 = 805961985
+    YUV422P10 = 805961984
+    YUV444P10 = 805961728
+    YUV420P12 = 806093057
+    YUV422P12 = 806093056
+    YUV444P12 = 806092800
+    YUV420P14 = 806224129
+    YUV422P14 = 806224128
+    YUV444P14 = 806223872
+    YUV420P16 = 806355201
+    YUV422P16 = 806355200
+    YUV444P16 = 806354944
+    YUV444PH = 823132160
+    YUV444PS = 824180736
+    RGB24 = 537395200
+    RGB27 = 537460736
+    RGB30 = 537526272
+    RGB36 = 537657344
+    RGB42 = 537788416
+    RGB48 = 537919488
+    RGBH = 554696704
+    RGBS = 555745280
+
+NONE = PresetFormat.NONE
+GRAY8 = PresetFormat.GRAY8
+GRAY9 = PresetFormat.GRAY9
+GRAY10 = PresetFormat.GRAY10
+GRAY12 = PresetFormat.GRAY12
+GRAY14 = PresetFormat.GRAY14
+GRAY16 = PresetFormat.GRAY16
+GRAY32 = PresetFormat.GRAY32
+GRAYH = PresetFormat.GRAYH
+GRAYS = PresetFormat.GRAYS
+YUV410P8 = PresetFormat.YUV410P8
+YUV411P8 = PresetFormat.YUV411P8
+YUV440P8 = PresetFormat.YUV440P8
+YUV420P8 = PresetFormat.YUV420P8
+YUV422P8 = PresetFormat.YUV422P8
+YUV444P8 = PresetFormat.YUV444P8
+YUV420P9 = PresetFormat.YUV420P9
+YUV422P9 = PresetFormat.YUV422P9
+YUV444P9 = PresetFormat.YUV444P9
+YUV420P10 = PresetFormat.YUV420P10
+YUV422P10 = PresetFormat.YUV422P10
+YUV444P10 = PresetFormat.YUV444P10
+YUV420P12 = PresetFormat.YUV420P12
+YUV422P12 = PresetFormat.YUV422P12
+YUV444P12 = PresetFormat.YUV444P12
+YUV420P14 = PresetFormat.YUV420P14
+YUV422P14 = PresetFormat.YUV422P14
+YUV444P14 = PresetFormat.YUV444P14
+YUV420P16 = PresetFormat.YUV420P16
+YUV422P16 = PresetFormat.YUV422P16
+YUV444P16 = PresetFormat.YUV444P16
+YUV444PH = PresetFormat.YUV444PH
+YUV444PS = PresetFormat.YUV444PS
+RGB24 = PresetFormat.RGB24
+RGB27 = PresetFormat.RGB27
+RGB30 = PresetFormat.RGB30
+RGB36 = PresetFormat.RGB36
+RGB42 = PresetFormat.RGB42
+RGB48 = PresetFormat.RGB48
+RGBH = PresetFormat.RGBH
+RGBS = PresetFormat.RGBS
+
+class SampleType(IntEnum):
+    INTEGER = 0
+    FLOAT = 1
+
+INTEGER = SampleType.INTEGER
+FLOAT = SampleType.FLOAT
+
+class TransferCharacteristics(IntEnum):
+    TRANSFER_BT709 = 1
+    TRANSFER_UNSPECIFIED = 2
+    TRANSFER_BT470_M = 4
+    TRANSFER_BT470_BG = 5
+    TRANSFER_BT601 = 6
+    TRANSFER_ST240_M = 7
+    TRANSFER_LINEAR = 8
+    TRANSFER_LOG_100 = 9
+    TRANSFER_LOG_316 = 10
+    TRANSFER_IEC_61966_2_4 = 11
+    TRANSFER_IEC_61966_2_1 = 13
+    TRANSFER_BT2020_10 = 14
+    TRANSFER_BT2020_12 = 15
+    TRANSFER_ST2084 = 16
+    TRANSFER_ARIB_B67 = 18
+
+TRANSFER_BT709 = TransferCharacteristics.TRANSFER_BT709
+TRANSFER_UNSPECIFIED = TransferCharacteristics.TRANSFER_UNSPECIFIED
+TRANSFER_BT470_M = TransferCharacteristics.TRANSFER_BT470_M
+TRANSFER_BT470_BG = TransferCharacteristics.TRANSFER_BT470_BG
+TRANSFER_BT601 = TransferCharacteristics.TRANSFER_BT601
+TRANSFER_ST240_M = TransferCharacteristics.TRANSFER_ST240_M
+TRANSFER_LINEAR = TransferCharacteristics.TRANSFER_LINEAR
+TRANSFER_LOG_100 = TransferCharacteristics.TRANSFER_LOG_100
+TRANSFER_LOG_316 = TransferCharacteristics.TRANSFER_LOG_316
+TRANSFER_IEC_61966_2_4 = TransferCharacteristics.TRANSFER_IEC_61966_2_4
+TRANSFER_IEC_61966_2_1 = TransferCharacteristics.TRANSFER_IEC_61966_2_1
+TRANSFER_BT2020_10 = TransferCharacteristics.TRANSFER_BT2020_10
+TRANSFER_BT2020_12 = TransferCharacteristics.TRANSFER_BT2020_12
+TRANSFER_ST2084 = TransferCharacteristics.TRANSFER_ST2084
+TRANSFER_ARIB_B67 = TransferCharacteristics.TRANSFER_ARIB_B67
