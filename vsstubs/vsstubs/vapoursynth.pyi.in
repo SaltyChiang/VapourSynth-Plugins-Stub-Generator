@@ -3,7 +3,7 @@ import inspect
 import logging
 from fractions import Fraction
 import types
-from typing import Any, BinaryIO, Callable, Dict, Iterator, List, NamedTuple, Sequence, Set, Tuple, Union, overload
+from typing import Any, BinaryIO, Callable, Dict, Iterator, List, NamedTuple, Sequence, Set, Tuple, TypeVar, Union, overload
 from _typeshed import ReadableBuffer
 from concurrent.futures import Future
 from enum import IntEnum
@@ -244,23 +244,25 @@ class AudioFrame(RawFrame):
     def __len__(self) -> int: ...
     def __str__(self) -> str: ...
 
+_RawNode = TypeVar("_RawNode", bound=RawNode)
+
 class RawNode:
     def __init__(self):
         raise Error("Class cannot be instantiated directly")
     @overload
     def get_frame_async_raw(
-        self,
+        self: _RawNode,
         n: int,
-        cb: Callable[[RawNode, int, Union[RawNode, Error]], None],
-    ) -> Future[RawNode]: ...
+        cb: Callable[[_RawNode, int, Union[_RawNode, Error]], None],
+    ) -> Future[_RawNode]: ...
     @overload
     def get_frame_async_raw(
-        self,
+        self: _RawNode,
         n: int,
-        cb: Future[RawNode],
-        future_wrapper: Callable[[Callable[[Union[RawNode, Error]], None], Union[RawNode, Error]], None] = None,
-    ) -> Future[RawNode]: ...
-    def get_frame_async(self, n: int) -> Future[RawNode]: ...
+        cb: Future[_RawNode],
+        future_wrapper: Callable[[Callable[[Union[_RawNode, Error]], None], Union[_RawNode, Error]], None] = None,
+    ) -> Future[_RawNode]: ...
+    def get_frame_async(self: _RawNode, n: int) -> Future[_RawNode]: ...
     def frames(self, prefetch: int = None, backlog: int = None) -> Iterator[RawNode]: ...
     def __dealloc__(self) -> None: ...
 
@@ -275,20 +277,6 @@ class VideoNode(RawNode):
     def __init__(self):
         raise Error("Class cannot be instantiated directly")
     def __getattr__(self, name: str) -> Plugin: ...
-    @overload
-    def get_frame_async_raw(
-        self,
-        n: int,
-        cb: Callable[[VideoNode, int, Union[VideoNode, Error]], None],
-    ) -> Future[VideoNode]: ...
-    @overload
-    def get_frame_async_raw(
-        self,
-        n: int,
-        cb: Future[VideoNode],
-        future_wrapper: Callable[[Callable[[Union[VideoNode, Error]], None], Union[VideoNode, Error]], None] = None,
-    ) -> Future[VideoNode]: ...
-    def get_frame_async(self, n: int) -> Future[VideoNode]: ...
     def get_frame(self, n: int) -> VideoFrame: ...
     def set_output(self, index: int = 0, alpha: VideoNode = None, alt_output: int = 0) -> None: ...
     def output(
@@ -322,20 +310,6 @@ class AudioNode(RawNode):
     def __init__(self):
         raise Error("Class cannot be instantiated directly")
     def __getattr__(self, name: str) -> Plugin: ...
-    @overload
-    def get_frame_async_raw(
-        self,
-        n: int,
-        cb: Callable[[AudioNode, int, Union[AudioNode, Error]], None],
-    ) -> Future[AudioNode]: ...
-    @overload
-    def get_frame_async_raw(
-        self,
-        n: int,
-        cb: Future[AudioNode],
-        future_wrapper: Callable[[Callable[[Union[AudioNode, Error]], None], Union[AudioNode, Error]], None] = None,
-    ) -> Future[AudioNode]: ...
-    def get_frame_async(self, n: int) -> Future[AudioNode]: ...
     def get_frame(self, n: int) -> AudioFrame: ...
     def set_output(self, index: int = 0): ...
     def __add__(self, right: AudioNode) -> AudioNode: ...

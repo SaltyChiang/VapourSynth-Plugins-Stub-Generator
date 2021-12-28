@@ -17,15 +17,15 @@ def plugins_str(plugins: List[PluginMeta], indent: int = 4) -> str:
         lines_video.append(f'    """{plugin.name}"""')
         lines_audio.append(f"class {plugin.namespace}(Plugin):")
         lines_audio.append(f'    """{plugin.name}"""')
-        for func in plugin.functions_core.keys():
-            if plugin.functions_video[func] is not None:
-                lines_core.append(f"    def {func}({plugin.functions_core[func]})->VideoNode:...")
-                lines_video.append(f"    def {func}({plugin.functions_video[func]})->VideoNode:...")
-            elif plugin.functions_audio[func] is not None:
-                lines_core.append(f"    def {func}({plugin.functions_core[func]})->AudioNode:...")
-                lines_audio.append(f"    def {func}({plugin.functions_audio[func]})->AudioNode:...")
-            else:
-                lines_core.append(f"    def {func}({plugin.functions_core[func]})->VideoNode:...")
+        for func in filter(None, plugin.functions_core):
+            lines_core.append(r"    @staticmethod")
+            lines_core.append(f"    def {func.name}({func.signature})->{func.return_signature}:...")
+        for func in filter(None, plugin.functions_video):
+            lines_video.append(r"    @staticmethod")
+            lines_video.append(f"    def {func.name}({func.signature})->{func.return_signature}:...")
+        for func in filter(None, plugin.functions_audio):
+            lines_audio.append(r"    @staticmethod")
+            lines_audio.append(f"    def {func.name}({func.signature})->{func.return_signature}:...")
         if len(lines_core) > 2:
             ret_core += lines_core
         if len(lines_video) > 2:
