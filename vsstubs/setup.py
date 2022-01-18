@@ -1,7 +1,7 @@
 from setuptools import setup
 
 
-VERSION = "0.3.1"
+VERSION = "0.3.2"
 LICENSE = "MIT"
 DESCRIPTION = "A module to generate VapourSynth's stub file for intellicode."
 

@@ -99,11 +99,13 @@ def function_vs2py(function: FunctionMeta) -> List[FunctionMeta]:
     if len(output_list) == 1 and output_list[0] == "None":
         return_signature = "None"
     elif len(output_list) == 1 and output_list[0] == "Any":
-        return_signature = input_list[0].split(":")[-1]
-        if "VideoNode" in return_signature:
+        first_type = input_list[0].split(":")[-1]
+        if "VideoNode" in first_type:
             return_signature = "VideoNode"
-        elif "AudioNode" in return_signature:
+        elif "AudioNode" in first_type:
             return_signature = "AudioNode"
+        elif "Source" in name:
+            return_signature = "VideoNode"
         else:
             return_signature = "Any"
     elif len(output_list) == 1:
