@@ -6,11 +6,11 @@
         {
             "label": "vspreview",
             "type": "shell",
-            "command": "path\\to\\your\\VapourSynth\\python.exe",   //Change to path to the python.exe which your python is using.
+            "command": "${command:python.interpreterPath}",
             "args": [
                 "-m",
                 "vspreview",
-                "${file}",
+                "\"'${file}'\"",
             ]
         }
     ]

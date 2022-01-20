@@ -46,7 +46,7 @@ Files in `.vscode` folder might be helpful to set up VSCode.
 
 3. Paste the tasks.json to the *user settings folder*<sup>1</sup> or *work area settings folder*<sup>2</sup>, and paste the keybindings.json to your vscode *user settings folder*<sup>1</sup>. This will enable shift+f5/f6 hotkeys as f5/f6 in vsedit.
 
-4. **Remember to change `"path\\to\\your\\VapourSynth\\python.exe"` in settings.json and tasks.json to your own python interpreter.**
+4. **Remember to change `"path\\to\\your\\VapourSynth\\python.exe"` in settings.json to your own python interpreter.**
 
 <sup>1</sup>: Usually refer to `%APPDATA%\Code\User\` on Windows and `$HOME/.config/Code/User/` on Linux
 
