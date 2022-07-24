@@ -1,4 +1,5 @@
 from typing import Iterator, List
+from keyword import iskeyword
 import vapoursynth
 
 
@@ -61,6 +62,8 @@ def signature_vs2py(signature: str) -> List[str]:
             type = "Any"
         else:
             name = name_type_opt[0]
+            if iskeyword(name):
+                name = f"{name}_"
             type = name_type_opt[1]
             array = type.endswith("[]")
             type = type[:-2] if array else type
